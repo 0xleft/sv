@@ -7,6 +7,18 @@
 #include "FileMap.h"
 #include <fstream>
 #include <args.hxx>
+#include <sstream>
+#include <vector>
+
+std::vector<std::string> split(const std::string& str) {
+    std::vector<std::string> strings;
+    std::istringstream f(str);
+    std::string s;
+    while (std::getline(f, s, ',')) {
+        strings.push_back(s);
+    }
+    return strings;
+}
 
 std::string sha256(const std::string str) {
     unsigned char hash[SHA256_DIGEST_LENGTH];
@@ -23,15 +35,18 @@ std::string sha256(const std::string str) {
     return ss.str();
 }
 
-void find_files(FileMapLeaf* parent, FileMap& fileMap, int maxDepth, int currentdepth, bool evade) {
+void find_files(FileMapLeaf* parent, FileMap& fileMap, int maxDepth, int currentdepth, std::vector<std::string>& evadedPaths) {
     if (!exists(parent->getPath()));
     boost::filesystem::directory_iterator end_itr;
     boost::filesystem::directory_iterator itr(parent->getPath());
     while (itr != end_itr) {
         try {
-            if (evade) {
-                // this temporary as should probably be implemented better
-                if (itr->path().string() == "/proc" || itr->path().string() == "/Windows") { ++itr; continue; }
+
+            for (std::string evadedPath : evadedPaths) {
+                if (itr->path().string() == evadedPath) {
+                    ++itr;
+                    continue; 
+                }
             }
 
             if (is_directory(itr->status())) {
@@ -54,7 +69,7 @@ void find_files(FileMapLeaf* parent, FileMap& fileMap, int maxDepth, int current
 
                 if (currentdepth < maxDepth) {
                     int depth = currentdepth + 1;
-                    find_files(leaf, fileMap, maxDepth, depth, evade);
+                    find_files(leaf, fileMap, maxDepth, depth, evadedPaths);
                 }
             }
         }
@@ -75,9 +90,8 @@ int main(int argc, char** argv) {
     args::HelpFlag help(parser, "help", "help", { 'h', "help" });
     args::ValueFlag<int> maxDepth(parser, "maxDepth", "Max Depth", { 'd' }, 5);
     args::Flag save(parser, "save", "If it should save to sdiff.bin :. it will not print to std::cout", { 's', "save" });
-    args::Flag evade(parser, "evade", "Don't go into commonly bad folders", { 'e', "evade" });
     args::ValueFlag<std::string> startPath(parser, "startPath", "Start Path", {'p', "path"}, "/");
-
+    args::ValueFlag<std::string> evadedPaths(parser, "evadedPaths", "Evaded paths comma separated", { 'e', "evaded" }, "/proc,/Windows,/sys");
 
     try {
         parser.ParseCLI(argc, argv);
@@ -98,7 +112,10 @@ int main(int argc, char** argv) {
     boost::filesystem::path rootPath(args::get(startPath));
     FileMapLeaf* root = new FileMapLeaf("", rootPath);
     fileMap.setRoot(root);
-    find_files(root, fileMap, i_maxDepth, 0, args::get(evade));
+
+    std::string s_evadedPaths = args::get(evadedPaths);
+    std::vector<std::string> v_evadedPaths = split(s_evadedPaths);
+    find_files(root, fileMap, i_maxDepth, 0, v_evadedPaths);
 
     if (args::get(save)) {
         saveFile(root->getSave().dump());

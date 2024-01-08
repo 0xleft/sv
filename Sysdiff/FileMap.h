@@ -4,8 +4,6 @@
 #include <string>
 #include <json.hpp>
 
-using json = nlohmann::json;
-
 class FileMapLeaf {
 	FileMapLeaf* parent = nullptr;
 	std::vector<FileMapLeaf*> children;
@@ -18,14 +16,14 @@ public:
 		this->path = path;
 	}
 
-	json getSave() {
-		json out;
-		out["children"] = json::array();
+	nlohmann::json getSave() {
+		nlohmann::json out;
+		out["children"] = nlohmann::json::array();
 		out["hash"] = this->hash;
 		out["path"] = this->path.string();
 
 		for (FileMapLeaf* child : this->children) {
-			json childOut = child->getSave();
+			nlohmann::json childOut = child->getSave();
 			out["children"].push_back(childOut);
 		}
 

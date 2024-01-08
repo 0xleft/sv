@@ -23,13 +23,17 @@ std::string sha256(const std::string str) {
     return ss.str();
 }
 
-void find_files(FileMapLeaf* parent, FileMap& fileMap, int maxDepth, int currentdepth) {
+void find_files(FileMapLeaf* parent, FileMap& fileMap, int maxDepth, int currentdepth, bool evade) {
     if (!exists(parent->getPath()));
     boost::filesystem::directory_iterator end_itr;
     boost::filesystem::directory_iterator itr(parent->getPath());
     while (itr != end_itr) {
         try {
-            if (strstr(itr->path().string().c_str(), "Windows")) { ++itr; continue; }
+            if (evade) {
+                // this temporary as should probably be implemented better
+                if (itr->path().string() == "/proc" || itr->path().string() == "/Windows") { ++itr; continue; }
+            }
+
             if (is_directory(itr->status())) {
                 boost::filesystem::directory_iterator inner_end_itr;
                 boost::filesystem::directory_iterator inner_itr(itr->path());
@@ -50,7 +54,7 @@ void find_files(FileMapLeaf* parent, FileMap& fileMap, int maxDepth, int current
 
                 if (currentdepth < maxDepth) {
                     int depth = currentdepth + 1;
-                    find_files(leaf, fileMap, maxDepth, depth);
+                    find_files(leaf, fileMap, maxDepth, depth, evade);
                 }
             }
         }
@@ -71,6 +75,7 @@ int main(int argc, char** argv) {
     args::HelpFlag help(parser, "help", "help", { 'h', "help" });
     args::ValueFlag<int> maxDepth(parser, "maxDepth", "Max Depth", { 'd' }, 5);
     args::Flag save(parser, "save", "If it should save to sdiff.bin :. it will not print to std::cout", { 's', "save" });
+    args::Flag evade(parser, "evade", "Don't go into commonly bad folders", { 'e', "evade" });
     args::ValueFlag<std::string> startPath(parser, "startPath", "Start Path", {'p', "path"}, "/");
 
 
@@ -93,7 +98,7 @@ int main(int argc, char** argv) {
     boost::filesystem::path rootPath(args::get(startPath));
     FileMapLeaf* root = new FileMapLeaf("", rootPath);
     fileMap.setRoot(root);
-    find_files(root, fileMap, i_maxDepth, 0);
+    find_files(root, fileMap, i_maxDepth, 0, args::get(evade));
 
     if (args::get(save)) {
         saveFile(root->getSave().dump());

@@ -5,6 +5,8 @@
 #include <openssl/sha.h>
 #include <string>
 #include "FileMap.h"
+#include <fstream>
+#include <args.hxx>
 
 std::string sha256(const std::string str) {
     unsigned char hash[SHA256_DIGEST_LENGTH];
@@ -58,16 +60,47 @@ void find_files(FileMapLeaf* parent, FileMap& fileMap, int maxDepth, int current
     }
 }
 
-int main() {
+void saveFile(std::string toSave) {
+    std::ofstream outfile("sdiff.bin", std::ios_base::binary);
+    outfile.write(toSave.c_str(), toSave.size());
+    outfile.close();
+}
+
+int main(int argc, char** argv) {
+    args::ArgumentParser parser("Sysdiff", "");
+    args::HelpFlag help(parser, "help", "help", { 'h', "help" });
+    args::ValueFlag<int> maxDepth(parser, "maxDepth", "Max Depth", { 'd' }, 5);
+    args::Flag save(parser, "save", "If it should save to sdiff.bin :. it will not print to std::cout", { 's', "save" });
+    args::ValueFlag<std::string> startPath(parser, "startPath", "Start Path", {'p', "path"}, "/");
+
+
+    try {
+        parser.ParseCLI(argc, argv);
+    }
+    catch (args::Help& h) {
+        std::cout << parser;
+        return 0;
+    }
+    catch (args::ParseError& e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+    }
+
     FileMap fileMap;
-    
-    int maxDepth = 2;
-    boost::filesystem::path rootPath("/");
+
+    int i_maxDepth = args::get(maxDepth);
+    boost::filesystem::path rootPath(args::get(startPath));
     FileMapLeaf* root = new FileMapLeaf("", rootPath);
     fileMap.setRoot(root);
-    find_files(root, fileMap, maxDepth, 0);
+    find_files(root, fileMap, i_maxDepth, 0);
 
-    std::cout << root->getSave(0);
+    if (args::get(save)) {
+        saveFile(root->getSave().dump());
+    }
+    else {
+        std::cout << root->getSave().dump() << "\n";
+    }
 
     return 0;
 }

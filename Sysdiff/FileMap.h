@@ -2,6 +2,9 @@
 #include <boost/filesystem.hpp>
 #include <vector>
 #include <string>
+#include <json.hpp>
+
+using json = nlohmann::json;
 
 class FileMapLeaf {
 	FileMapLeaf* parent = nullptr;
@@ -15,17 +18,18 @@ public:
 		this->path = path;
 	}
 
-	std::string getSave(int depth) {
-		std::string finalS;
-		std::string spacer(depth, '\t');
-
+	json getSave() {
+		json out;
+		out["children"] = json::array();
+		out["hash"] = this->hash;
+		out["path"] = this->path.string();
 
 		for (FileMapLeaf* child : this->children) {
-			int newDepth = depth + 1;
-			finalS += spacer + child->getSave(newDepth) + "\n";
+			json childOut = child->getSave();
+			out["children"].push_back(childOut);
 		}
 
-		return this->getPath().string() + " hash: " + this->hash + (finalS == "" ? "" : "\n") + finalS;
+		return out;
 	}
 
 	void setParent(FileMapLeaf* parent) { this->parent = parent; }

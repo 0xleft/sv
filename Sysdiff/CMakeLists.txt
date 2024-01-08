@@ -1,13 +1,13 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
 set(BOOST_ROOT "C:/local/boost_1_82_0")
+find_package(Boost 1.82.0 COMPONENTS filesystem)
+
 set(OPENSSL_USE_STATIC_LIBS TRUE)
 
-
-find_package(Boost 1.82.0 COMPONENTS filesystem) 
 find_package(OpenSSL REQUIRED)
 
-# include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 include_directories(${OPENSSL_INSTALL_DIR}/include)
 include_directories(${Boost_INCLUDE_DIRS}) 

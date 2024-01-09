@@ -7,3 +7,5 @@ project ("sv")
 
 # Include sub-projects.
 add_subdirectory ("Sysdiff")
+
+add_subdirectory ("SysdiffViewer")

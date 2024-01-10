@@ -1,0 +1,6 @@
+{
+  "name": "sv",
+  "dependencies": [
+    "boost"
+  ]
+}

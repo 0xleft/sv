@@ -11,3 +11,5 @@ CTestTestfile.cmake
 _deps
 out
 .vs
+vcpkg_installed/
+vcpkg.C*

@@ -1,8 +1,8 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
 set(BOOST_ROOT "C:/local/boost_1_82_0")
-# find_package(Boost 1.82.0 COMPONENTS filesystem)
-find_package(Boost 1.50 REQUIRED COMPONENTS filesystem)
+find_package(Boost 1.82.0 REQUIRED COMPONENTS filesystem)
+# find_package(Boost 1.50 REQUIRED COMPONENTS filesystem)
 
 set(OPENSSL_USE_STATIC_LIBS TRUE)
 
